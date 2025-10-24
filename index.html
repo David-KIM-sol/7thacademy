@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>행축 아카데미 컨퍼런스 익명 설문조사</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fc; }
+        .rating-input:checked + .rating-label {
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+            border-color: #3b82f6;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5), 0 2px 4px -2px rgba(59, 130, 246, 0.5);
+        }
+        .rating-label {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        /* JS가 display를 제어할 수 있도록 초기 상태는 숨김 처리 */
+        #loading-container, #attendance-check-container, #survey-container, #exit-container, #completion-container {
+            display: none;
+        }
+
+        /* 중앙 정렬 컨테이너 스타일 */
+        #app {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app" class="p-4">
+    <!-- 초기 로딩 화면 -->
+    <div id="loading-container" class="text-center p-8 bg-white rounded-xl shadow-2xl transition-all duration-300 w-full max-w-xl">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p class="text-lg text-gray-600">데이터를 불러오는 중입니다...</p>
+    </div>
+
+    <!-- 1. 참석 여부 확인 화면 -->
+    <div id="attendance-check-container" class="bg-white rounded-xl shadow-2xl p-6 sm:p-10 w-full max-w-md text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <h1 class="text-2xl font-extrabold text-gray-800 mb-6">이번 컨퍼런스에 참석하셨나요?</h1>
+        <div class="flex space-x-4">
+            <button id="btn-attended" class="flex-1 bg-blue-500 text-white font-bold py-3 rounded-xl hover:bg-blue-600 transition duration-300 shadow-md transform hover:scale-[1.02]">
+                예, 참석했습니다
+            </button>
+            <button id="btn-not-attended" class="flex-1 bg-gray-300 text-gray-800 font-bold py-3 rounded-xl hover:bg-gray-400 transition duration-300 shadow-md">
+                아니오
+            </button>
+        </div>
+    </div>
+
+    <!-- 1-1. 미참석 종료 화면 -->
+    <div id="exit-container" class="bg-white rounded-xl shadow-2xl p-6 sm:p-10 w-full max-w-md text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h1 class="text-2xl font-bold text-gray-800 mb-3">설문 참여가 종료되었습니다.</h1>
+        <p class="text-gray-600 mb-6">컨퍼런스에 참석하신 분들께만 설문이 제공됩니다. 다음에 꼭 뵙기를 바랍니다.</p>
+    </div>
+
+    <!-- 2. 설문조사 Form 화면 -->
+    <div id="survey-container" class="bg-white rounded-xl shadow-2xl p-6 sm:p-10 w-full max-w-3xl">
+        <h1 class="text-3xl font-extrabold text-gray-800 mb-2 border-b-4 border-blue-500 pb-2">행축 아카데미 컨퍼런스 만족도 설문</h1>
+        <p class="text-sm text-gray-500 mb-8">본 설문은 익명으로 진행됩니다. 소중한 피드백에 감사드립니다.</p>
+        
+        <form id="survey-form">
+            
+            <!-- Q1: 전체적인 만족도 (1~5점) -->
+            <div class="mb-8 p-5 bg-blue-50 rounded-lg shadow-inner">
+                <label class="block text-lg font-semibold text-gray-700 mb-3" for="q1">1. 이번 컨퍼런스의 **전체적인 만족도**는 어떠셨나요? (5점 만점)</label>
+                <div class="flex justify-between space-x-2 sm:space-x-4">
+                    <input type="radio" id="q1-1" name="q1" value="1" class="rating-input hidden" required>
+                    <label for="q1-1" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">1점</label>
+                    <input type="radio" id="q1-2" name="q1" value="2" class="rating-input hidden">
+                    <label for="q1-2" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">2점</label>
+                    <input type="radio" id="q1-3" name="q1" value="3" class="rating-input hidden">
+                    <label for="q1-3" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">3점</label>
+                    <input type="radio" id="q1-4" name="q1" value="4" class="rating-input hidden">
+                    <label for="q1-4" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">4점</label>
+                    <input type="radio" id="q1-5" name="q1" value="5" class="rating-input hidden">
+                    <label for="q1-5" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">5점</label>
+                </div>
+            </div>
+
+            <!-- Q2: 강의 내용 만족도 (1~5점) -->
+            <div class="mb-8 p-5 bg-gray-50 rounded-lg">
+                <label class="block text-lg font-semibold text-gray-700 mb-3" for="q2">2. 이번 컨퍼런스의 **강의 내용**에 대해 얼마나 만족하셨나요? (5점 만점)</label>
+                <div class="flex justify-between space-x-2 sm:space-x-4">
+                    <input type="radio" id="q2-1" name="q2" value="1" class="rating-input hidden" required>
+                    <label for="q2-1" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">1점</label>
+                    <input type="radio" id="q2-2" name="q2" value="2" class="rating-input hidden">
+                    <label for="q2-2" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">2점</label>
+                    <input type="radio" id="q2-3" name="q2" value="3" class="rating-input hidden">
+                    <label for="q2-3" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">3점</label>
+                    <input type="radio" id="q2-4" name="q2" value="4" class="rating-input hidden">
+                    <label for="q2-4" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">4점</label>
+                    <input type="radio" id="q2-5" name="q2" value="5" class="rating-input hidden">
+                    <label for="q2-5" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">5점</label>
+                </div>
+            </div>
+            
+            <!-- Q3: 진행일정/장소 만족도 (1~5점) -->
+            <div class="mb-8 p-5 bg-blue-50 rounded-lg shadow-inner">
+                <label class="block text-lg font-semibold text-gray-700 mb-3" for="q3">3. 이번 컨퍼런스의 **진행일정(2박3일)과 장소**는 얼마나 만족하셨나요? (5점 만점)</label>
+                <div class="flex justify-between space-x-2 sm:space-x-4">
+                    <input type="radio" id="q3-1" name="q3" value="1" class="rating-input hidden" required>
+                    <label for="q3-1" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">1점</label>
+                    <input type="radio" id="q3-2" name="q3" value="2" class="rating-input hidden">
+                    <label for="q3-2" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">2점</label>
+                    <input type="radio" id="q3-3" name="q3" value="3" class="rating-input hidden">
+                    <label for="q3-3" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">3점</label>
+                    <input type="radio" id="q3-4" name="q3" value="4" class="rating-input hidden">
+                    <label for="q3-4" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">4점</label>
+                    <input type="radio" id="q3-5" name="q3" value="5" class="rating-input hidden">
+                    <label for="q3-5" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">5점</label>
+                </div>
+            </div>
+
+            <!-- Q4: 사역 실질적 도움 예상 (1~5점) -->
+            <div class="mb-8 p-5 bg-gray-50 rounded-lg">
+                <label class="block text-lg font-semibold text-gray-700 mb-3" for="q4">4. 이번 컨퍼런스의 내용이 **사역에 얼마나 실질적인 도움**을 줄 것이라고 예상하시나요? (5점 만점)</label>
+                <div class="flex justify-between space-x-2 sm:space-x-4">
+                    <input type="radio" id="q4-1" name="q4" value="1" class="rating-input hidden" required>
+                    <label for="q4-1" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">1점</label>
+                    <input type="radio" id="q4-2" name="q4" value="2" class="rating-input hidden">
+                    <label for="q4-2" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">2점</label>
+                    <input type="radio" id="q4-3" name="q4" value="3" class="rating-input hidden">
+                    <label for="q4-3" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">3점</label>
+                    <input type="radio" id="q4-4" name="q4" value="4" class="rating-input hidden">
+                    <label for="q4-4" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">4점</label>
+                    <input type="radio" id="q4-5" name="q4" value="5" class="rating-input hidden">
+                    <label for="q4-5" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">5점</label>
+                </div>
+            </div>
+
+            <!-- Q5: 유익/흥미로운 세션 (주관식) -->
+            <div class="mb-8 p-5 bg-blue-50 rounded-lg shadow-inner">
+                <label class="block text-lg font-semibold text-gray-700 mb-2" for="q5">5. 유익하거나 흥미로웠던 세션(강의)은 무엇이었으며, 그 이유는 무엇인가요? (주관식)</label>
+                <textarea id="q5" name="q5" rows="2" class="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="세션명과 간략한 이유를 작성해 주세요." required></textarea>
+            </div>
+
+            <!-- Q6: 네트워킹 기회 충분 여부 (1~5점) -->
+            <div class="mb-8 p-5 bg-gray-50 rounded-lg">
+                <label class="block text-lg font-semibold text-gray-700 mb-3" for="q6">6. 다른 참석자(사역자)와 교류할 수 있는 **네트워킹 기회가 충분히 제공**되었나요? (5점 만점)</label>
+                <div class="flex justify-between space-x-2 sm:space-x-4">
+                    <input type="radio" id="q6-1" name="q6" value="1" class="rating-input hidden" required>
+                    <label for="q6-1" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">1점</label>
+                    <input type="radio" id="q6-2" name="q6" value="2" class="rating-input hidden">
+                    <label for="q6-2" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">2점</label>
+                    <input type="radio" id="q6-3" name="q6" value="3" class="rating-input hidden">
+                    <label for="q6-3" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">3점</label>
+                    <input type="radio" id="q6-4" name="q6" value="4" class="rating-input hidden">
+                    <label for="q6-4" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">4점</label>
+                    <input type="radio" id="q6-5" name="q6" value="5" class="rating-input hidden">
+                    <label for="q6-5" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">5점</label>
+                </div>
+            </div>
+
+            <!-- Q7: 알게 된 주요 경로 (체크박스) -->
+            <div class="mb-8 p-5 bg-blue-50 rounded-lg shadow-inner">
+                <label class="block text-lg font-semibold text-gray-700 mb-3">7. 본 컨퍼런스를 알게 된 주요 경로는 무엇입니까? (복수 선택 가능)</label>
+                <div class="space-y-2">
+                    <label class="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+                        <input type="checkbox" name="q7_source" value="공식 웹사이트/SNS" class="h-5 w-5 text-blue-600 rounded focus:ring-blue-500">
+                        <span class="ml-3 text-gray-700">공식 웹사이트/SNS</span>
+                    </label>
+                    <label class="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+                        <input type="checkbox" name="q7_source" value="동료/지인 추천" class="h-5 w-5 text-blue-600 rounded focus:ring-blue-500">
+                        <span class="ml-3 text-gray-700">동료/지인 추천</span>
+                    </label>
+                    <label class="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+                        <input type="checkbox" name="q7_source" value="관련 커뮤니티/카페/포털사이트" class="h-5 w-5 text-blue-600 rounded focus:ring-blue-500">
+                        <span class="ml-3 text-gray-700">관련 커뮤니티/카페/포털사이트</span>
+                    </label>
+                    <label class="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+                        <input type="checkbox" name="q7_source" value="뉴스/언론사 기사/광고" class="h-5 w-5 text-blue-600 rounded focus:ring-blue-500">
+                        <span class="ml-3 text-gray-700">뉴스/언론사 기사/광고</span>
+                    </label>
+                    <label class="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+                        <input type="checkbox" name="q7_source" value="기타" class="h-5 w-5 text-blue-600 rounded focus:ring-blue-500">
+                        <span class="ml-3 text-gray-700">기타 (직접 입력)</span>
+                    </label>
+                    <input type="text" id="q7_other" name="q7_other" class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="기타 경로를 입력해 주세요. (선택 사항)">
+                </div>
+            </div>
+
+            <!-- Q8: 추천 의향 (1~5점) -->
+            <div class="mb-8 p-5 bg-gray-50 rounded-lg">
+                <label class="block text-lg font-semibold text-gray-700 mb-3" for="q8">8. 이 컨퍼런스를 동료나 친구에게 **추천할 의향**은 어느 정도입니까? (5점 만점)</label>
+                <div class="flex justify-between space-x-2 sm:space-x-4">
+                    <input type="radio" id="q8-1" name="q8" value="1" class="rating-input hidden" required>
+                    <label for="q8-1" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">1점</label>
+                    <input type="radio" id="q8-2" name="q8" value="2" class="rating-input hidden">
+                    <label for="q8-2" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">2점</label>
+                    <input type="radio" id="q8-3" name="q8" value="3" class="rating-input hidden">
+                    <label for="q8-3" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">3점</label>
+                    <input type="radio" id="q8-4" name="q8" value="4" class="rating-input hidden">
+                    <label for="q8-4" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">4점</label>
+                    <input type="radio" id="q8-5" name="q8" value="5" class="rating-input hidden">
+                    <label for="q8-5" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">5점</label>
+                </div>
+            </div>
+
+            <!-- Q9: 다음 클래스 참석 의향 (1~5점) -->
+            <div class="mb-8 p-5 bg-blue-50 rounded-lg shadow-inner">
+                <label class="block text-lg font-semibold text-gray-700 mb-3" for="q9">9. 다음 원데이클래스(26년도 봄행축관련)에 **참석할 의향**은 어느 정도입니까? (5점 만점)</label>
+                <div class="flex justify-between space-x-2 sm:space-x-4">
+                    <input type="radio" id="q9-1" name="q9" value="1" class="rating-input hidden" required>
+                    <label for="q9-1" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">1점</label>
+                    <input type="radio" id="q9-2" name="q9" value="2" class="rating-input hidden">
+                    <label for="q9-2" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">2점</label>
+                    <input type="radio" id="q9-3" name="q9" value="3" class="rating-input hidden">
+                    <label for="q9-3" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">3점</label>
+                    <input type="radio" id="q9-4" name="q9" value="4" class="rating-input hidden">
+                    <label for="q9-4" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">4점</label>
+                    <input type="radio" id="q9-5" name="q9" value="5" class="rating-input hidden">
+                    <label for="q9-5" class="rating-label flex-1 text-center py-2 rounded-full border border-gray-300 text-sm sm:text-base hover:bg-gray-100">5점</label>
+                </div>
+            </div>
+
+            <!-- Q10: 개선 사항/다음 주제 (주관식) -->
+            <div class="mb-8 p-5 bg-gray-50 rounded-lg">
+                <label class="block text-lg font-semibold text-gray-700 mb-2" for="q10">10. 다음 컨퍼런스에서 다루었으면 하는 세션이나 개선이 필요하다고 생각하는 부분이 있다면 자유롭게 의견을 말씀해 주세요. (주관식)</label>
+                <textarea id="q10" name="q10" rows="4" class="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="귀한 의견을 남겨주세요."></textarea>
+            </div>
+
+            <p id="error-message" class="text-red-600 text-sm mb-4 hidden font-medium">모든 필수 질문에 응답해 주세요.</p>
+            
+            <button type="submit" id="submit-button" class="w-full bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600 transition duration-300 shadow-md transform hover:scale-[1.01]">
+                설문 제출 및 강의안 다운로드 받기
+            </button>
+        </form>
+    </div>
+
+    <!-- 3. 설문 완료 및 다운로드 화면 -->
+    <div id="completion-container" class="bg-white rounded-xl shadow-2xl p-6 sm:p-10 w-full max-w-xl text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-blue-500 mx-auto mb-6" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        </svg>
+        <h1 class="text-3xl font-bold text-gray-800 mb-3">설문 참여 감사합니다!</h1>
+        <p class="text-lg text-gray-600 mb-8">컨퍼런스 특별 강의안을 다운로드하실 수 있습니다.</p>
+        
+        <a id="download-link" href="https://drive.google.com/file/d/16Qbt8sv6_mLkTK4d5B5Tu4Jyrig7dQau/view?usp=drive_link" target="_blank" class="inline-block bg-blue-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:bg-blue-700 transition duration-300 shadow-lg transform hover:scale-[1.02]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2 -mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            강의안 다운로드 (Google Drive)
+        </a>
+        <p class="text-sm text-gray-400 mt-6">이 링크는 설문 제출이 완료된 사용자에게만 제공됩니다.</p>
+    </div>
+</div>
+
+<script>
+    // --- UI Elements ---
+    const loadingContainer = document.getElementById('loading-container');
+    const attendanceCheckContainer = document.getElementById('attendance-check-container');
+    const surveyContainer = document.getElementById('survey-container');
+    const completionContainer = document.getElementById('completion-container');
+    const exitContainer = document.getElementById('exit-container');
+    const surveyForm = document.getElementById('survey-form');
+    const errorMessage = document.getElementById('error-message');
+    
+    // --- CONSTANTS ---
+    // ⚠️ Apps Script Webhook URL (최종 수정된 주소)
+    const GOOGLE_FORM_ACTION_URL = 'https://script.google.com/macros/s/AKfycbyZ64hAMPDCaODPl1klj6Y4vId9onDELrvs_5rKj22TaSWTZQiv9YRbvw7VlN0aR81Ye/exec'; 
+    
+    // 🔗 설문 질문별 Apps Script 키 매핑 (ID는 모두 소문자 키로 변경됨)
+    const GOOGLE_FORM_FIELD_MAP = {
+        q1: 'q1', // 1. 전체 만족도
+        q2: 'q2', // 2. 강의 내용 만족도
+        q3: 'q3', // 3. 일정/장소 만족도
+        q4: 'q4', // 4. 사역 도움 예상
+        q5: 'q5', // 5. 유익/흥미 세션 (주관식)
+        q6: 'q6', // 6. 네트워킹 충분 여부
+        q7: 'q7', // 7. 알게 된 경로 (체크박스)
+        q8: 'q8', // 8. 추천 의향
+        q9: 'q9', // 9. 다음 클래스 참석 의향
+        q10: 'q10' // 10. 개선 사항 (주관식)
+    };
+    
+    // --- State Management ---
+    const SURVEY_COMPLETED_KEY = 'hac_survey_completed';
+
+    // --- Utility Functions ---
+
+    function showUI(elementId) {
+        // 모든 컨테이너 숨기기
+        loadingContainer.style.display = 'none';
+        attendanceCheckContainer.style.display = 'none';
+        surveyContainer.style.display = 'none';
+        completionContainer.style.display = 'none';
+        exitContainer.style.display = 'none';
+
+        // 요청된 컨테이너 표시
+        if (elementId === 'loading') {
+            loadingContainer.style.display = 'block';
+        } else if (elementId === 'check') {
+            attendanceCheckContainer.style.display = 'block';
+        } else if (elementId === 'survey') {
+            surveyContainer.style.display = 'block';
+        } else if (elementId === 'complete') {
+            completionContainer.style.display = 'block';
+        } else if (elementId === 'exit') {
+            exitContainer.style.display = 'block';
+        }
+    }
+
+    // --- Main Flow ---
+    
+    function checkStatusAndDisplay() {
+        // Firebase 로직 제거 후, localStorage 상태만 확인
+        const isCompleted = localStorage.getItem(SURVEY_COMPLETED_KEY) === 'true';
+
+        if (isCompleted) {
+            showUI('complete');
+        } else {
+            showUI('check');
+        }
+    }
+
+    // --- Event Handlers ---
+
+    // 1. 참석 확인 버튼 핸들러
+    document.getElementById('btn-attended').addEventListener('click', () => {
+        showUI('survey');
+    });
+
+    document.getElementById('btn-not-attended').addEventListener('click', () => {
+        showUI('exit');
+    });
+
+    // 2. 설문 제출 핸들러
+    async function submitSurvey(event) {
+        event.preventDefault();
+        
+        const form = event.target;
+        const submitButton = document.getElementById('submit-button');
+
+        // 클라이언트 측 유효성 검사 (필수 항목 체크)
+        if (!form.checkValidity()) {
+            errorMessage.textContent = "모든 필수 항목(1, 2, 3, 4, 6, 8, 9, 5번)에 응답해 주세요.";
+            errorMessage.classList.remove('hidden');
+            // 주관식 Q5 체크
+            if (form.q5.value.trim() === '') {
+                errorMessage.textContent = "5번 질문에 응답해 주세요.";
+            }
+            return;
+        }
+
+        // Q7 (체크박스) 유효성 검사 - 최소 1개 선택 또는 '기타' 입력
+        const q7Checkboxes = document.querySelectorAll('input[name="q7_source"]:checked');
+        const q7Other = document.getElementById('q7_other').value.trim();
+        if (q7Checkboxes.length === 0 && q7Other === '') {
+            errorMessage.textContent = "7번 질문에서 알게 된 경로를 하나 이상 선택하거나 '기타'를 작성해 주세요.";
+            errorMessage.classList.remove('hidden');
+            return;
+        }
+        
+        errorMessage.classList.add('hidden');
+        submitButton.disabled = true;
+        submitButton.textContent = "전송 중...";
+
+        // --- Data Collection ---
+        
+        // Q7 체크박스 및 기타 항목 결합
+        const q7CheckValues = Array.from(q7Checkboxes).map(cb => cb.value);
+        if (q7Other) {
+            q7CheckValues.push(`기타: ${q7Other}`);
+        }
+        const q7SourcesString = q7CheckValues.join(', '); // Apps Script로 전송할 문자열
+
+        // 주관식 필드 (Q5, Q10)가 비어있을 경우 공백 문자(' ') 전송 (Apps Script 오류 방지)
+        const q5Value = form.q5.value.trim() || ' ';
+        const q10Value = form.q10.value.trim() || ' ';
+
+        // Apps Script로 전송할 최종 데이터 객체
+        const data = {
+            [GOOGLE_FORM_FIELD_MAP.q1]: form.q1.value,
+            [GOOGLE_FORM_FIELD_MAP.q2]: form.q2.value,
+            [GOOGLE_FORM_FIELD_MAP.q3]: form.q3.value,
+            [GOOGLE_FORM_FIELD_MAP.q4]: form.q4.value,
+            [GOOGLE_FORM_FIELD_MAP.q5]: q5Value,
+            [GOOGLE_FORM_FIELD_MAP.q6]: form.q6.value,
+            [GOOGLE_FORM_FIELD_MAP.q7]: q7SourcesString,
+            [GOOGLE_FORM_FIELD_MAP.q8]: form.q8.value,
+            [GOOGLE_FORM_FIELD_MAP.q9]: form.q9.value,
+            [GOOGLE_FORM_FIELD_MAP.q10]: q10Value,
+        };
+
+        // --- Webhook Submission (Apps Script) ---
+        try {
+            const formData = new URLSearchParams(data);
+            
+            // Console.log 디버깅용: 최종 전송 데이터 확인
+            console.log("Final Payload (for POST body):", formData.toString());
+
+            const response = await fetch(GOOGLE_FORM_ACTION_URL, {
+                method: 'POST',
+                mode: 'no-cors', // CORS 오류 방지를 위한 설정
+                cache: 'no-cache',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData.toString()
+            });
+
+            // Apps Script 웹훅은 'no-cors' 모드에서 응답 상태를 체크할 수 없음.
+            // 성공으로 간주하고 로컬 상태 업데이트 및 화면 전환 진행.
+            
+            // 3. 상태 업데이트 및 화면 전환 (성공)
+            localStorage.setItem(SURVEY_COMPLETED_KEY, 'true');
+            showUI('complete');
+
+        } catch (error) {
+            console.error("설문 제출 오류 (Apps Script submission error):", error);
+            
+            // 오류가 발생했더라도 사용자 경험을 위해 완료 화면으로 전환
+            localStorage.setItem(SURVEY_COMPLETED_KEY, 'true');
+            showUI('complete'); 
+
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = "설문 제출 및 강의안 다운로드 받기";
+        }
+    }
+    
+    // --- Initialization ---
+
+    function initializeApp() {
+        surveyForm.addEventListener('submit', submitSurvey);
+        checkStatusAndDisplay();
+    }
+
+    // DOMContentLoaded 이벤트에서 앱 초기화 함수 호출
+    document.addEventListener('DOMContentLoaded', initializeApp);
+
+</script>
+</body>
+</html>
